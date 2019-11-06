@@ -1,0 +1,43 @@
+{
+  "name": "wdm",
+  "version": "1.0.0",
+  "description": "Widget Download Manager",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test",
+    "dev": "rollup -c -w",
+    "build": "rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fengdonglp/wdm.git"
+  },
+  "keywords": [
+    "download"
+  ],
+  "author": "fengd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fengdonglp/wdm/issues"
+  },
+  "homepage": "https://github.com/fengdonglp/wdm#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.6.1",
+    "@typescript-eslint/parser": "^2.6.1",
+    "eslint": "^6.1.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.5.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-prettier": "^3.1.1",
+    "prettier": "^1.18.2",
+    "rollup": "^1.26.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-typescript2": "^0.25.2",
+    "typescript": "^3.7.2"
+  },
+  "eslintIgnore": [
+    "./node_modules/**/*",
+    "./dist/**/*"
+  ]
+}
