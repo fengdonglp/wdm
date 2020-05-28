@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "strict": true,
     "allowJs": true,
@@ -13,12 +14,15 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "lib": [
-      "esnext"
+      "dom",
+      "es6",
+      "es2017"
     ]
   },
   "include": [
     "rollup.config.js",
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.js"
   ],
   "exclude": [
     "node_modules",

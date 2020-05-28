@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    
+  </style>
+</head>
+<body>
+  <!-- <div class="wdm-container min">
+    <div class="wdm-box">
+      <header class="wdm-title">
+        <div class="wdm-minimize" title="最小化">
+          <span class="wdm-minimize__btn"></span>
+        </div>
+        <div class="wdm-title__text">下载列表</div>
+      </header>
+      <div class="wdm-content">
+        <ul class="wdm-list">
+          <li class="wdm-list-item">
+            <div class="wdm-download-state">
+                <div class="wdm-download__loading"></div>
+              <a href="#" download="" class="wdm-download__btn">下载</a>
+            </div>
+            <div class="wdm-filename" title="测试excel.xlsx">测试excel.xlsx</div>
+          </li>
+          <li class="wdm-list-item">
+              <div class="wdm-download-state">
+                <div class="wdm-download__loading"></div>
+                <a href="#" download="" class="wdm-download__btn">下载</a>
+              </div>
+              <div class="wdm-filename" title="测试excel.xlsx">测试excel.xlsx</div>
+            </li>
+        </ul>
+      </div>
+    </div>
+    <div class="wdm-collapse" title="点击展开下载列表">
+      <div class="wdm-collapse-btn"></div>
+    </div>
+  </div> -->
+
+  <script src="../dist/wdm.js"></script>
+  <script>
+    var wdmInstance = new wdm();
+
+    wdmInstance.add({
+      name: 'test',
+      request: {
+        url: '/stpweb/export/queryByexcelReprotId.do?excelReprotId=11',
+        type: 'get',
+        successKey: 'errno',
+        successValue: '200',
+        endKey: 'data.state',
+        endValue: [2,3],
+        resultKey: 'data'
+      }
+    })
+
+    setTimeout(() => {
+      wdmInstance.add({
+      name: 'test',
+      request: {
+        url: '/stpweb/export/queryByexcelReprotId.do?excelReprotId=11',
+        type: 'get',
+        successKey: 'errno',
+        successValue: '200',
+        endKey: 'data.state',
+        endValue: [2,3],
+        resultKey: 'data'
+      }
+    })
+    }, 1000);
+
+    wdmInstance.add({
+      name: 'test1',
+      request: {
+        url: '/stpweb/export/queryByexcelReprotId.do?excelReprotId=12',
+        type: 'get',
+        successKey: 'errno',
+        successValue: '200',
+        endKey: 'data.state',
+        endValue: [2,3],
+        resultKey: 'data'
+      }
+    })
+  </script>
+</body>
+</html>
