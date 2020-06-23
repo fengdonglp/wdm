@@ -16,6 +16,12 @@ interface DownloadListOption {
   name: string, // 下载文件名
 }
 
+type DomReturn = {
+  el: HTMLElement,
+  changeState: (elState: number, url: string) => void,
+  toggleLight: (light: boolean) => void
+} | undefined;
+
 interface DownloadDomOption {
   title?: string,
   list?: Array<DownloadListOption>,
@@ -27,7 +33,8 @@ interface DownloadDomOption {
     bottom?: number,
   },
   collapse?: boolean,
-  container?: HTMLElement
+  container?: HTMLElement,
+  deleteListWhenDownload?: boolean
 }
 
 class DownloadDom extends EventEmitter {
@@ -49,11 +56,11 @@ class DownloadDom extends EventEmitter {
     this.createContainerDom();
   }
 
-  createContainerDom() {
+  createContainerDom(): void {
     this.el = document.createElement('div');
-    this.el.className = 'wdm-container';
+    this.el.className = 'wdm-container min';
     this.el.innerHTML = `
-      <div class="wdm-box" style="width: ${this.options.width || 'initial'}">
+      <div class="wdm-box" style="width: ${this.options.width || 'initial'}; display: none">
         <header class="wdm-title">
           <div class="wdm-minimize" title="最小化">
             <span class="wdm-minimize__btn"></span>
@@ -77,17 +84,19 @@ class DownloadDom extends EventEmitter {
     this.addEvent();
   }
 
-  hideEmptyList() {
+  hideEmptyList(): void {
     if (!this.emptyDom) return;
     this.emptyDom.style.display = 'none';
+    this.isEmpty = false;
   }
 
-  showEmptyList() {
+  showEmptyList(): void {
     if (!this.emptyDom) return;
     this.emptyDom.style.display = 'block';
+    this.isEmpty = true;
   }
 
-  addEvent() {
+  addEvent(): void {
     if (!this.el) return;
     const minBtn = this.el.querySelector('.wdm-minimize');
     const collapseBtn = this.el.querySelector('.wdm-collapse');
@@ -124,7 +133,7 @@ class DownloadDom extends EventEmitter {
     name: string,
     state: number,
     downloadUrl?: string
-  }) {
+  }): DomReturn {
     const {
       ctx,
       name,
@@ -135,7 +144,6 @@ class DownloadDom extends EventEmitter {
 
     if (this.isEmpty) {
       this.hideEmptyList();
-      this.isEmpty = false;
     }
 
     const listItemDom = document.createElement('li');
@@ -149,33 +157,32 @@ class DownloadDom extends EventEmitter {
     `;
 
     const listContainer = this.listEl;
-    const that = this;
     listContainer.appendChild(listItemDom);
 
-    function changeState(state: number, url = '') {
+    const changeState = (elState: number, url = ''): void => {
       const downloadEl = listItemDom.querySelector('.wdm-download__btn');
       const loadingEl = listItemDom.querySelector('.wdm-download__loading');
       if (!downloadEl || !downloadEl) return;
 
-      if (state === 2) {
+      if (elState === 2) {
         (downloadEl as HTMLElement).style.display = 'inline';
         (loadingEl as HTMLElement).style.display = 'none';
         downloadEl.setAttribute('data-url', url);
         return;
       }
 
-      if (state === 1) {
+      if (elState === 1) {
         (downloadEl as HTMLElement).style.display = 'none';
         (loadingEl as HTMLElement).style.display = 'inline-block';
         return;
       }
 
-      if (state === 3) {
+      if (elState === 3) {
         (listItemDom.parentElement as HTMLElement).removeChild(listItemDom);
         const list = listContainer.querySelectorAll('.wdm-list-item');
         
         if (list.length <= 1) {
-          that.showEmptyList();
+          this.showEmptyList();
         }
       }
     }
@@ -197,17 +204,49 @@ class DownloadDom extends EventEmitter {
             downloadURL(url);
           }
         }
-        changeState(3);
+
+        if (this.options.deleteListWhenDownload) {
+          changeState(3);
+        }
       });
     }
 
-    return {
+    const domReturn = {
       el: listItemDom,
       changeState,
-      toggleLight(light = true) {
+      toggleLight(light = true): void {
+        // eslint-disable-next-line no-unused-expressions
         light ? addClass(listItemDom, 'light') : removeClass(listItemDom, 'light');
       }
-    };
+    }
+
+    // eslint-disable-next-line consistent-return
+    return domReturn;
+  }
+
+  clear(): void {
+    if (this.el && this.listEl) {
+      this.emptyDom = null;
+      this.listEl.innerHTML = '<li class="wdm-list-item empty-list" style="text-align:center;">空</li>';
+      this.emptyDom = this.el.querySelector('.empty-list');
+      this.showEmptyList();
+    }
+  }
+
+  expand(): void {
+    if (!this.el) return;
+    const collapseBtn = this.el.querySelector('.wdm-collapse');
+    if (collapseBtn) {
+      (collapseBtn as HTMLElement).click();
+    }
+  }
+
+  collapse(): void {
+    if (!this.el) return;
+    const minBtn = this.el.querySelector('.wdm-minimize');
+    if (minBtn) {
+      (minBtn as HTMLElement).click();
+    }
   }
 }
 
@@ -226,8 +265,8 @@ type Metadata = {
 };
 
 interface DownloadItem {
-  task: Task,
-  dom: {el: HTMLElement, changeState: Function, toggleLight: (light?: boolean) => void} | undefined,
+  task: Task | {id: number | string},
+  dom: DomReturn | undefined,
   metadata: Metadata
 }
 
@@ -241,19 +280,24 @@ export default class Wdm extends EventEmitter {
 
   storeKeyName = `wdm_download_list_${  md5(window.location.href)}`;
 
-  constructor(public options: {width?: string}) {
+  constructor(public options: {width?: string, deleteListWhenDownload: true}) {
     super();
 
-    this.el = new DownloadDom({width: this.options.width});
+    this.el = new DownloadDom({
+      width: this.options.width,
+      deleteListWhenDownload: this.options.deleteListWhenDownload
+    });
 
     this.el.on('download_click', (collectorItem: DownloadItem) => {
-        this.emit('download_click', collectorItem);
-        this.delete(collectorItem.task.id);
+      this.emit('download_click', collectorItem);
+      if (this.options.deleteListWhenDownload) {
+        this.delete(collectorItem.task.id.toString());
+      }
     });
     
     this.el.on('download_expired', (collectorItem: DownloadItem) => {
       this.emit('download_expired', collectorItem);
-      this.delete(collectorItem.task.id);
+      this.delete(collectorItem.task.id.toString());
     });
 
     this.initListFromStorage();
@@ -290,6 +334,40 @@ export default class Wdm extends EventEmitter {
       return JSON.parse(storage);
     }
     return [];
+  }
+
+  // 添加不包含请求的下载列表，列表从后台获取
+  addNoRequestList(list: Array<any>, update: boolean): void {
+    if (update) {
+      this.el.clear();
+      this.collector.clear();
+    }
+    list.forEach((item, index) => {
+      const metadata: Metadata = {
+        name: item.name,
+        createTime: Date.now(),
+        expired: item.expired || expiredTime,
+        $option: item,
+      }
+      const collectorItem: DownloadItem = {
+        dom: undefined,
+        task: {
+          id: index
+        },
+        metadata
+      };
+  
+      const dom = this.el.add({
+        ctx: collectorItem,
+        name: item.name,
+        state: item.state === undefined ? 1 : item.state,
+        downloadUrl: item.downloadUrl
+      });
+  
+      collectorItem.dom = dom;
+  
+      this.collector.set(index.toString(), collectorItem);
+    })
   }
 
   add(metaOption: DownloadTaskOption | Metadata, isStore = false): boolean {
@@ -344,12 +422,12 @@ export default class Wdm extends EventEmitter {
 
       return true;
     } 
-      const item = this.collector.get(task.id);
-      if (item && item.dom) {
-        item.dom.toggleLight();
-      }
-      return false;
-    
+
+    const item = this.collector.get(task.id);
+    if (item && item.dom) {
+      item.dom.toggleLight(true);
+    }
+    return false;
   }
 
   resetListLight(): void {
@@ -366,6 +444,14 @@ export default class Wdm extends EventEmitter {
       dItem.dom.changeState(data.state, data.exportUrl);
     }
     this.emit('request_end', ctx);
+  }
+
+  collapse(): void {
+    this.el.collapse();
+  }
+
+  expand(): void {
+    this.el.expand();
   }
 
   delete(id: string): void {
